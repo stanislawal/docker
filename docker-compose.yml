@@ -1,0 +1,62 @@
+version: '3'
+services:
+
+  #PHP Service
+  php-fpm:
+    image: alex16235/axiom-php-fpm-8.0
+    container_name: php
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    container_name: nginx
+    tty: true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - php-fpm
+    networks:
+      - app-network
+
+  #MySQL Server
+  mysql:
+    image: mysql
+    container_name: mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=laravelcrm
+    networks:
+      - app-network
+
+  #PhpMyAdmin
+  myadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - 8080:80
+    environment:
+      - PMA_HOST=mysql
+    networks:
+      - app-network
+
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
